@@ -5,6 +5,18 @@ var client = new Client()
 
 var usage = (msg) => {
   console.log(msg)
+  console.log('\nUsage: node client.js <command> <options>')
+  console.log('Commands:')
+  console.log('\tstatus -a <appid> -h <host> -k <key>')
+  console.log('\tsign -h <host> -k <key> -b <POST body> -p <path>')
+  console.log('\tpost -a <appid> -h <host> -k <key> -s <service id> -w <bandwidth change>')
+  console.log('\tget -a <appid> -h <host> -k <key> -r <recommendation id>')
+  console.log('\nExamples:')
+  console.log('node client.js status -a app1 -h http://localhost:8081 -k mykey')
+  console.log('node client.js sign -a app1 -h http://localhost:8081 -k mykey -b \'\' -p /recommendation/1')
+  console.log('node client.js sign -a app1 -h http://localhost:8081 -k mykey -b \'{service_id: "8001234",bandwidth_change: 20, action: "INCREASE_BANDWIDTH"}\' -p /recommendation/1')
+  console.log('node client.js post -a app1 -h http://localhost:8081 -k mykey -s 8001234 -w -50')
+  console.log('node client.js get -a app1 -h http://localhost:8081 -k mykey -r 22')
   process.exit()
 }
 
@@ -86,7 +98,7 @@ var sendUnsignedPost = (url, payload) => {
     })
     req.on('error', (err) => {
       console.log('Error getting sig')
-      reject(err)
+      reject('Unable to contact host')
     })
   })
 }
@@ -113,7 +125,11 @@ var postSign = (argv) => {
 
   var sign_url = host + '/sign'
 
-  sendUnsignedPost(sign_url, newbody).then((sig) => { console.log(sig)})
+  sendUnsignedPost(sign_url, newbody).then((sig) => { 
+    console.log(sig)
+  }).catch((err) => {
+    usage(err)
+  })
 }
 
 var getStatus = (argv) => {
@@ -140,8 +156,7 @@ var getStatus = (argv) => {
   }).then((response) => {
     console.log(response)
   }).catch((err) => {
-    console.log('-------')
-    console.log(err)
+    usage(err)
   })
 
 }
@@ -172,8 +187,7 @@ var getRecommendation = (argv) => {
   }).then((response) => {
     console.log(response)
   }).catch((err) => {
-    console.log('-------')
-    console.log(err)
+    usage(err)
   })
 }
 
@@ -210,8 +224,7 @@ var postRecommendation = (argv) => {
   }).then((response) => {
     console.log(response)
   }).catch((err) => {
-    console.log('-------')
-    console.log(err)
+    usage(err)
   })
 }
 
