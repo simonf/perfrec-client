@@ -1,5 +1,7 @@
 const commandLineArgs = require('command-line-args')
 const util = require('util')
+var logger = require('./log')
+var auth = require('./auth')
 var Client = require('node-rest-client').Client
 var client = new Client()
 
@@ -85,51 +87,24 @@ var sendSignedPost = (url, appid, sig, body) => {
   })  
 }
 
-var sendUnsignedPost = (url, payload) => {
-  var args = {
-    data: payload,
-    headers: { "Content-Type": "application/json" }
-  }
-  // console.log(args)
-  return new Promise((resolve, reject) => {
-    let req = client.post(url, args,  (data, response) => {
-      // console.log('Got sig: '+util.inspect(data))
-      resolve(data)
-    })
-    req.on('error', (err) => {
-      console.log('Error getting sig')
-      reject('Unable to contact host')
-    })
-  })
+var pad2 = function(ival) {
+	if (ival < 10) return '0' +ival
+	else return '' + ival
 }
 
-var postSign = (argv) => {
-  console.log('signing')
-  const getSignDefinitions = [
-    {name: 'host_string', alias: 'h', type: String},
-    {name: 'key', alias: 'k', type: String},
-    {name: 'body', alias: 'b', type: String},
-    {name: 'path', alias: 'p', type: String}
-  ]
-  const getSignOptions = commandLineArgs(getSignDefinitions,{ argv })
-  var host = validateOrDie(getSignOptions, 'host_string')
-  var payload = getSignOptions.body
-  var key = validateOrDie(getSignOptions,'key')
-  var path = validateOrDie(getSignOptions,'path')
-  
-  var newbody = {
-    plaintext: payload,
-    key: key,
-    path: path
-  }
-
-  var sign_url = host + '/sign'
-
-  sendUnsignedPost(sign_url, newbody).then((sig) => { 
-    console.log(sig)
-  }).catch((err) => {
-    usage(err)
-  })
+var sign = (key, path, payload) => {
+  logger.info('SIGNING body ' + payload)
+  var body_sig = auth.signBody(payload, key)
+  let dt = new Date()
+  var hourstamp = '' +
+                  dt.getFullYear() +
+                  pad2(dt.getMonth()+1) +
+                  pad2(dt.getDate()) +
+                  pad2(dt.getHours())
+  logger.info('SIGNING ' + hourstamp + ' with path ' + path + ' and hash ' + body_sig)
+  var full_sig = auth.signBody(hourstamp+path+body_sig, key)
+  logger.debug('Full sig: ' + full_sig)
+  return full_sig
 }
 
 var getStatus = (argv) => {
@@ -138,6 +113,7 @@ var getStatus = (argv) => {
     {name: 'host_string', alias: 'h', type: String},
     {name: 'key', alias: 'k', type: String}
   ]
+
   const getStatusOptions = commandLineArgs(getStatusDefinitions,{ argv })
   var appid = validateOrDie(getStatusOptions, 'app_id')
   var host = validateOrDie(getStatusOptions, 'host_string')
@@ -145,20 +121,14 @@ var getStatus = (argv) => {
   
   var get_url = host + '/status'
 
-  var body = {
-    plaintext: '',
-    path: '/status',
-    key: key
-  }
+  var signature = sign(key, '/status', '')
 
-  sendUnsignedPost(host+'/sign', body).then((data) => {
-    return sendSignedGet(get_url, appid, data.signature)
-  }).then((response) => {
+  sendSignedGet(get_url, appid, signature).then((response) => {
+    console.log('---------------')
     console.log(response)
   }).catch((err) => {
     usage(err)
   })
-
 }
 
 var getRecommendation = (argv) => {
@@ -176,15 +146,10 @@ var getRecommendation = (argv) => {
   
   var get_url = host + '/recommendation/'+recid
 
-  var body = {
-    plaintext: '',
-    path: '/recommendation/'+recid,
-    key: key
-  }
+  var signature = sign(key, '/recommendation/'+recid, '')
 
-  sendUnsignedPost(host+'/sign', body).then((data) => {
-    return sendSignedGet(get_url, appid, data.signature)
-  }).then((response) => {
+  sendSignedGet(get_url, appid, signature).then((response) => {
+    console.log('---------------')
     console.log(response)
   }).catch((err) => {
     usage(err)
@@ -209,19 +174,16 @@ var postRecommendation = (argv) => {
   
   var post_url = host + '/recommendation'
 
-  var body = {
-    plaintext: {
-      service_id: svcid,
-      bandwidth_change: bwc,
-      action: change_dir
-    },
-    path: '/recommendation',
-    key: key
+  var plaintext = {
+    service_id: svcid,
+    bandwidth_change: bwc,
+    action: change_dir
   }
 
-  sendUnsignedPost(host+'/sign', body).then((data) => {
-    return sendSignedPost(post_url, appid, data.signature, body.plaintext)
-  }).then((response) => {
+  var signature = sign(key, '/recommendation', plaintext)
+
+  sendSignedPost(post_url, appid, signature, plaintext).then((response) => {
+    console.log('---------------')
     console.log(response)
   }).catch((err) => {
     usage(err)
