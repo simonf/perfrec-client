@@ -63,10 +63,10 @@ var formatDate = function(day, month, yr, hr) {
 
 var getDatestamps = function() {
     var now = new Date()
-    var d = now.getDate()
-    var m = now.getMonth() + 1
-    var yr = now.getFullYear()
-    var hr = now.getHours()
+    var d = now.getUTCDate()
+    var m = now.getUTCMonth() + 1
+    var yr = now.getUTCFullYear()
+    var hr = now.getUTCHours()
 
     var retval = [formatDate(d,m,yr, hr)]
 
