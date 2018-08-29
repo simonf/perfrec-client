@@ -59,7 +59,8 @@ var sendSignedGet = (url, appid, sig) => {
     }
   }
   return new Promise((resolve, reject) => {
-    let req = client.get(url, args, (data, response) => {
+      let req = client.get(url, args, (data, response) => {
+//	  console.log(response)
       resolve(data)
       })
     req.on('error', (err) => {
@@ -142,7 +143,7 @@ var getStatus = (argv) => {
 
   sendSignedGet(get_url, appid, signature).then((response) => {
     console.log('---------------')
-    console.log(response)
+      console.log(response)
   }).catch((err) => {
     usage(err)
   })
