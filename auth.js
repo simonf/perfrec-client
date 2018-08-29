@@ -67,9 +67,7 @@ var getDatestamps = function() {
     var m = now.getUTCMonth() + 1
     var yr = now.getUTCFullYear()
     var hr = now.getUTCHours()
-
     var retval = [formatDate(d,m,yr, hr)]
-
     var min = now.getMinutes()
     if(min >= 60 - MINUTE_WINDOW) retval.push(calcNextHour(d ,m, yr, hr))
     if(min <= MINUTE_WINDOW) 	retval.push(calcPreviousHour(d, m, yr, hr))

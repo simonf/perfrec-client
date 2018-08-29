@@ -97,10 +97,10 @@ var sign = (key, path, payload) => {
   var body_sig = auth.signBody(payload, key)
   let dt = new Date()
   var hourstamp = '' +
-                  dt.getFullYear() +
-                  pad2(dt.getMonth()+1) +
-                  pad2(dt.getDate()) +
-                  pad2(dt.getHours())
+                  dt.getUTCFullYear() +
+                  pad2(dt.getUTCMonth()+1) +
+                  pad2(dt.getUTCDate()) +
+                  pad2(dt.getUTCHours())
   logger.info('SIGNING ' + hourstamp + ' with path ' + path + ' and hash ' + body_sig)
   var full_sig = auth.signBody(hourstamp+path+body_sig, key)
   logger.debug('Full sig: ' + full_sig)
