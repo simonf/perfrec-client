@@ -107,6 +107,23 @@ var sign = (key, path, payload) => {
   return full_sig
 }
 
+var postSign = (argv) => {
+    const getStatusDefinitions = [
+	{name: 'body', alias: 'b', type: String},
+	{name: 'key', alias: 'k', type: String},
+	{name: 'path', alias: 'p', type: String}
+    ]
+
+    const getStatusOptions = commandLineArgs(getStatusDefinitions,{ argv })
+    var key = validateOrDie(getStatusOptions,'key')
+    var body = getStatusOptions['body'] || ''
+    var path = validateOrDie(getStatusOptions,'path')
+    
+    var signature = sign(key, path, body)
+    console.log('-----------')
+    console.log(signature)
+}
+
 var getStatus = (argv) => {
   const getStatusDefinitions = [
     {name: 'app_id', alias: 'a', type: String},
