@@ -193,9 +193,9 @@ var postRecommendation = (argv) => {
   var post_url = host + '/recommendation'
 
   var plaintext = {
-    service_id: svcid,
-    bandwidth_change: bwc,
-    action: change_dir
+      service_id: svcid,
+      bandwidth_change: Math.abs(bwc),
+      action: change_dir
   }
 
   var signature = sign(key, '/recommendation', plaintext)
