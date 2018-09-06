@@ -10,15 +10,17 @@ var usage = (msg) => {
   console.log('\nUsage: node client.js <command> <options>')
   console.log('Commands:')
   console.log('\tstatus -a <appid> -h <host> -k <key>')
-  console.log('\tsign -h <host> -k <key> -b <POST body> -p <path>')
+  console.log('\tsign -k <key> -b <POST body> -p <path>')
   console.log('\tpost -a <appid> -h <host> -k <key> -s <service id> -w <bandwidth change>')
   console.log('\tget -a <appid> -h <host> -k <key> -r <recommendation id>')
+  console.log('\tservice -a <appid> -h <host> -k <key> -s <service id>')
   console.log('\nExamples:')
   console.log('node client.js status -a app1 -h http://localhost:8081 -k mykey')
   console.log('node client.js sign -a app1 -h http://localhost:8081 -k mykey -b \'\' -p /recommendation/1')
-  console.log('node client.js sign -a app1 -h http://localhost:8081 -k mykey -b \'{service_id: "8001234",bandwidth_change: 20, action: "INCREASE_BANDWIDTH"}\' -p /recommendation/1')
+  console.log('node client.js sign -a app1 -k mykey -b \'{service_id: "8001234",bandwidth_change: 20, action: "INCREASE_BANDWIDTH"}\' -p /recommendation/1')
   console.log('node client.js post -a app1 -h http://localhost:8081 -k mykey -s 8001234 -w -50')
   console.log('node client.js get -a app1 -h http://localhost:8081 -k mykey -r 22')
+  console.log('node client.js service -a app1 -h http://localhost:8081 -k mykey -r 22')
   process.exit()
 }
 
@@ -41,7 +43,9 @@ var parseAndDispatch = () => {
     case 'post':    postRecommendation(argv)
                     break
     case 'get':     getRecommendation(argv)
-                    break
+      break
+  case 'service': getService(argv)
+      break
     default:        usage()
   }
 }
@@ -148,6 +152,33 @@ var getStatus = (argv) => {
     usage(err)
   })
 }
+
+var getService = (argv) => {
+  const getSvcDefinitions = [
+    {name: 'app_id', alias: 'a', type: String},
+    {name: 'host_string', alias: 'h', type: String},
+    {name: 'key', alias: 'k', type: String},
+    {name: 'service_id', alias: 's', type: Number}
+  ]
+  const getSvcOptions = commandLineArgs(getSvcDefinitions,{ argv })
+  var appid = validateOrDie(getSvcOptions, 'app_id')
+  var host = validateOrDie(getSvcOptions, 'host_string')
+  var svcid = validateOrDie(getSvcOptions, 'service_id')
+  var key = validateOrDie(getSvcOptions,'key')
+  
+  var get_url = host + '/'+svcid
+
+  var signature = sign(key, '/'+svcid, '')
+
+  sendSignedGet(get_url, appid, signature).then((response) => {
+    console.log('---------------')
+    console.log(response)
+  }).catch((err) => {
+    usage(err)
+  })
+}
+
+
 
 var getRecommendation = (argv) => {
   const getRecDefinitions = [
