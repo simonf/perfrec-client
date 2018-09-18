@@ -60,7 +60,7 @@ var sendSignedGet = (url, appid, sig) => {
   }
   return new Promise((resolve, reject) => {
       let req = client.get(url, args, (data, response) => {
-//	  console.log(response)
+      console.log(response.headers)
       resolve(data)
       })
     req.on('error', (err) => {
